@@ -1,3 +1,17 @@
+import itertools
+
+def validateRow(s, n):
+    for i in range(n):
+        if s[i] == 0 and s[(i-1)%n] == 0 and s[(i-2)%n] == 0:
+            return False
+        if s[i] == 0 and s[(i-1)%n] == 0 and s[(i+1)%n] == 0:
+            return False
+        if s[i] == 0 and s[(i+1)%n] == 0 and s[(i+2)%n] == 0:
+            return False
+    return True
+
+
+
 
 class OrbitTable:
     def __init__(self, n, s):
@@ -7,7 +21,10 @@ class OrbitTable:
         self.snakes = {}
         self.sum = []
         self.tickertape = []
-        self.rows = 1
+        self.rows = 0
+        self.snakeCount = 0
+        self.isReduced = True
+        self.slither = ''
         
     def update(self):
         last = self.table[len(self.table)-1][:]
@@ -42,16 +59,49 @@ class OrbitTable:
             self.update()
             i = i + 1
         self.table.pop(len(self.table)-1)
+        for a in self.table:
+            for b in a:
+                self.tickertape.append(b)
         
-    def mark_snakes(self):
-        
-            
+    def fillInSnake(self, i, j):
+        pass
+    
+    def markSnakes(self):
+        for i in range(self.rows):
+            for j in range(self.n):
+                if (i,j) in self.snakes:
+                    continue
+                if self.table[i][j] == 1:
+                    self.snakes[(i,j)] = -1
+                if self.tickertape[i*self.n + j] == 0 and self.tickertape[(i*self.n + j - 1)%len(self.tickertape)] == 1 and self.tickertape[(i*self.n + j + 1)%len(self.tickertape)] == 1:
+                    self.snakes[(i,j)] = -2
+                    self.isReduced = False
+                else:
+                    self.fillInSnake(i, j)
+              
     def printTablePlainText(self):
         for m in self.table:
             for i in range(self.n):
                 print(m[i], end=' ')
             print('')
             
-test = OrbitTable(4, [1, 1, 1, 1])
-test.simulate()
-test.printTablePlainText()
+n = 4
+states = list(map(list, itertools.product([0, 1], repeat=n)))
+    
+
+orbits = []
+for x in states:
+    if not validateRow(x, n):
+        states.remove(x)
+        continue
+    t = OrbitTable(n, x)
+    t.simulate()
+    t.markSnakes()
+    orbits.append(t)
+    for y in t.table:
+        states.remove(y)
+      
+for x in orbits:
+    x.printTablePlainText()
+    print(x.isReduced)
+    print('\n\n')
