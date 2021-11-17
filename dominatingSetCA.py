@@ -63,8 +63,25 @@ class OrbitTable:
             for b in a:
                 self.tickertape.append(b)
         
-    def fillInSnake(self, i, j):
-        pass
+    def fillInSnake(self, i, j, c):
+        self.snakes[(i,j)] = c
+        flag = False
+        if j < n-1:
+            if self.table[i][j+1] == 0:
+                self.snakes[(i,j+1)] = c
+                flag = True
+        else:
+            if self.table[i+1][0] == 0:
+                self.snakes[(i+1, 0)] = c
+                flag = True
+        if not flag:
+            return False
+        #take 0 step, options are (i-2%rows, j)
+        if self.fillInSnake((i-2)%self.rows,j,c):
+            return True
+        #take 1 step
+        
+        #take 2 step
     
     def markSnakes(self):
         for i in range(self.rows):
@@ -84,24 +101,26 @@ class OrbitTable:
             for i in range(self.n):
                 print(m[i], end=' ')
             print('')
+          
             
-n = 4
-states = list(map(list, itertools.product([0, 1], repeat=n)))
+            
+for i in range(1,15):
+    n = i
+    states = list(map(list, itertools.product([0, 1], repeat=n)))
     
 
-orbits = []
-for x in states:
-    if not validateRow(x, n):
-        states.remove(x)
-        continue
-    t = OrbitTable(n, x)
-    t.simulate()
-    t.markSnakes()
-    orbits.append(t)
-    for y in t.table:
-        states.remove(y)
-      
-for x in orbits:
-    x.printTablePlainText()
-    print(x.isReduced)
-    print('\n\n')
+    orbits = []
+    for x in states:
+        if not validateRow(x, n):
+            states.remove(x)
+            continue
+        t = OrbitTable(n, x)
+        t.simulate()
+        t.markSnakes()
+        orbits.append(t)
+        for y in t.table:
+            states.remove(y)
+    count = 0
+    for x in orbits:
+        if(x.isReduced):
+            print(x.rows)
