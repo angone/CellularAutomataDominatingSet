@@ -22,7 +22,7 @@ class OrbitTable:
         self.sum = []
         self.tickertape = []
         self.rows = 0
-        self.snakeCount = 0
+        self.snakeCount = 1
         self.isReduced = True
         self.slither = ''
         
@@ -62,27 +62,62 @@ class OrbitTable:
         for a in self.table:
             for b in a:
                 self.tickertape.append(b)
-        
-    def fillInSnake(self, i, j, c):
-        self.snakes[(i,j)] = c
+        self.calcSums()
+    
+    def calcSums(self):
+        for i in range(self.n):
+            s = 0
+            for j in range(self.rows):
+                s += self.table[j][i]
+            self.sum.append(s)
+            
+            
+            
+    def fillInSnake(self, i, j, c, prev):
+        if self.table[i][j] == 1:
+            return False
+        if (i, j) in self.snakes:
+            return True
         flag = False
-        if j < n-1:
+            
+        if j < self.n-1:
             if self.table[i][j+1] == 0:
+                self.snakes[(i,j)] = c
                 self.snakes[(i,j+1)] = c
                 flag = True
         else:
-            if self.table[i+1][0] == 0:
+            if self.table[(i+1)%self.rows][0] == 0:
+                self.snakes[(i,j)] = c
                 self.snakes[(i+1, 0)] = c
                 flag = True
         if not flag:
+            if i == 0 and j == 0 and self.table[0][1]:
+                i = self.rows-1
+                j = self.n-1
+                self.snakes[(i,j)] = c 
+                self.snakes[(0,0)] = c
+                flag = True
+        if not flag:
             return False
+        if self.snakeCount == 1:
+            self.slither += prev
+                #take 2 step
+        if j < self.n-3 and self.fillInSnake((i-2)%self.rows,j+3, c, '2'):
+            return True
+        if j >= self.n-3 and self.fillInSnake((i-1)%self.rows,(j+3)%self.n,c, '2'):
+            return True
+    
         #take 0 step, options are (i-2%rows, j)
-        if self.fillInSnake((i-2)%self.rows,j,c):
+        if j < self.n - 1 and self.fillInSnake((i-2)%self.rows,j+1,c,'0'):
+            return True
+        if j == self.n - 1 and self.fillInSnake((i-1)%self.rows,0,c,'0'):
             return True
         #take 1 step
-        
-        #take 2 step
-    
+        if j < self.n - 2 and self.fillInSnake((i-2)%self.rows,j+2,c,'1'):
+            return True
+        if j >= self.n-2 and self.fillInSnake((i-1)%self.rows,(j+2)%self.n,c,'1'):
+            return True
+
     def markSnakes(self):
         for i in range(self.rows):
             for j in range(self.n):
@@ -94,33 +129,69 @@ class OrbitTable:
                     self.snakes[(i,j)] = -2
                     self.isReduced = False
                 else:
-                    self.fillInSnake(i, j)
+                    if self.fillInSnake(i, j, self.snakeCount, ''):
+                        self.snakeCount += 1
               
     def printTablePlainText(self):
         for m in self.table:
             for i in range(self.n):
-                print(m[i], end=' ')
+                print(m[i], end='')
             print('')
-          
             
             
-for i in range(1,15):
-    n = i
-    states = list(map(list, itertools.product([0, 1], repeat=n)))
-    
+            
+    def printTableLatex(self):
+        print('\\begin{figure}[!ht]')
+        print('\\begin{center}')
+        print('\\setlength{\\tabcolsep}{2.5pt}')
+        print('\\renewcommand{\\arraystretch}{.4}')
+        print('\\begin{tabular}{',end='')
+        for _ in range(self.n+1):
+            print('c',end='')
+        print('}')
+        print('$x$',end='')
+        for i in range(1,self.n+1):
+            print(' & $v_{' + str(i)+'}$', end='')
+        print(' \\Bstrut')
+        print('\\\\\\hline')
+        for i in range(self.rows):
+            print('$x^{(' + str(i) + ')}$', end='')
+            for j in range(self.n):
+                c = self.snakes[(i,j)]
+                if c == -1:
+                    print(' & \\1', end='')
+                elif c == -2:
+                    print(' & \\0', end='')
+                else:
+                    print(' & {\\color{color' + str(c) + '}\\0}', end = '')
+            print(' \\\\')
+        print('\\hline \\Tstrut')
+        print('{\\bf Sum:} ', end='')
+        for i in range(self.n):
+            print('& \\bf{' + str(self.sum[i]) + '}', end='')
+        print('\n\\end{tabular}')
+        print("\\newline")
+        print(self.slither)
+        print('\\end{center}')
+        print('\\end{figure}')
+                
+        
+        
 
-    orbits = []
-    for x in states:
-        if not validateRow(x, n):
-            states.remove(x)
-            continue
-        t = OrbitTable(n, x)
-        t.simulate()
-        t.markSnakes()
-        orbits.append(t)
-        for y in t.table:
-            states.remove(y)
-    count = 0
-    for x in orbits:
-        if(x.isReduced):
-            print(x.rows)
+n = 13
+states = list(map(list, itertools.product([0, 1], repeat=n)))
+orbits = []
+for x in states:
+    if not validateRow(x, n):
+        states.remove(x)
+        continue
+    t = OrbitTable(n, x)
+    t.simulate()
+    t.markSnakes()
+    orbits.append(t)
+    for y in t.table:
+        states.remove(y)
+    
+count = 0
+for x in orbits:
+    x.printTableLatex()
