@@ -1,4 +1,10 @@
 import itertools
+import argparse
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-n", type = int, default = 7, help = "number of nodes")
+parser.add_argument("-row", type = str, default = "1111111", help = "starting row")
+parser.add_argument("-oper", type = str, default = "all", help = "operation to perform")
 
 def validateRow(s, n):
     for i in range(n):
@@ -176,22 +182,36 @@ class OrbitTable:
         print('\\end{figure}')
                 
         
-        
-
-n = 13
-states = list(map(list, itertools.product([0, 1], repeat=n)))
-orbits = []
-for x in states:
-    if not validateRow(x, n):
-        states.remove(x)
-        continue
-    t = OrbitTable(n, x)
+def singleRow():
+    x = []
+    for y in args.row:
+        x.append(int(y))
+    t = OrbitTable(args.n, x)
     t.simulate()
     t.markSnakes()
-    orbits.append(t)
-    for y in t.table:
-        states.remove(y)
+    t.printTableLatex()
+
+def allOrbitsForGivenN():
+    n = args.n
+    states = list(map(list, itertools.product([0, 1], repeat=n)))
+    orbits = []
+    for x in states:
+        if not validateRow(x, n):
+            states.remove(x)
+            continue
+        t = OrbitTable(n, x)
+        t.simulate()
+        t.markSnakes()
+        orbits.append(t)
+        for y in t.table:
+            states.remove(y)
     
-count = 0
-for x in orbits:
-    x.printTableLatex()
+    count = 0
+    for x in orbits:
+        x.printTableLatex()
+        
+        
+if args.oper = "all":
+    allOrbitsForGivenN()
+elif args.oper == "row":
+    singleRow()
